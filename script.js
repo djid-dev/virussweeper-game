@@ -1,5 +1,4 @@
 const $ = document.querySelector.bind(document);
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const clickSound = new Audio("./sounds/clickSound.wav");
 clickSound.volume = 0.4;
@@ -29,6 +28,7 @@ const $normal = $("#normal");
 const $hard = $("#hard");
 
 let gameStarted = false; // Indica si el juego ha comenzado
+let gameWin = false; // Indica si el jugador ha ganado
 
 let virusCount = 0; // Indica el número de virus
 let firewallCount = 0; // Indica el número de  firewall que se pueden usar
@@ -78,6 +78,8 @@ function playSound(sound) {
 }
 
 function startGame(difficulty) {
+  if (timer) clearInterval(timer);
+
   $initialScreen.style.display = "none";
   $gameOverScreen.style.display = "none";
   $gameScreen.style.display = "flex";
@@ -94,39 +96,15 @@ function startGame(difficulty) {
     $("#time").textContent = time;
   }, 1000);
 }
-function initEvents() {
-  document.addEventListener("keydown", (e) => {
-    playSound(keyboardKeySound);
-    if (e.key === "Enter" && !gameStarted && !currentDifficulty) {
-      getDifficulty();
-      return;
-    }
-    if (e.key === "Enter" && !gameStarted && currentDifficulty) {
-      startGame(currentDifficulty);
-      return;
-    }
-    if (e.key === "Enter" && gameStarted && currentDifficulty) {
-      $gameWinScreen.style.display = "none";
-      $gameScreen.style.display = "none";
-      $initialScreen.style.display = "flex";
-      currentDifficulty = null;
-      gameStarted = false;
-      return;
-    }
-    
-    
-  });
-  document.addEventListener("click", () => {
-    playSound(clickSound);
-  });
-}
 
-function getDifficulty() {
-  $difficultyScreen.style.display = "flex";
-  $initialScreen.style.display = "none";
+function initEvents() {
+
+  // Difficulty Selectors
   $selectors.querySelectorAll(".selector").forEach((selector) => {
     selector.addEventListener("click", (event) => {
-      switch (event.target.id) {
+      // Find the closest selector element (in case click hits a child)
+      const target = event.currentTarget;
+      switch (target.id) {
         case difficultyTypes.easy:
           currentDifficulty = DIFFICULTIES.easy;
           break;
@@ -144,9 +122,39 @@ function getDifficulty() {
       }
     });
   });
-  $document.addEventListener("click", () => {
+
+  document.addEventListener("keydown", (e) => {
+    playSound(keyboardKeySound);
+    if (e.key !== "Enter") return;
+
+    // Initial Start -> Go to Difficulty
+    if (e.key === "Enter" && !gameStarted && !currentDifficulty) {
+      getDifficulty();
+      return;
+    }
+
+    // Win/Lose Screen -> Restart
+    if (e.key === "Enter" && (!gameStarted || gameWin) && currentDifficulty) {
+      $gameWinScreen.style.display = "none";
+      $gameOverScreen.style.display = "none";
+      $gameScreen.style.display = "none";
+      $initialScreen.style.display = "flex";
+
+      currentDifficulty = null;
+      gameStarted = false;
+      gameWin = false;
+      return;
+    }
+  });
+
+  document.addEventListener("click", () => {
     playSound(clickSound);
   });
+}
+
+function getDifficulty() {
+  $difficultyScreen.style.display = "flex";
+  $initialScreen.style.display = "none";
 }
 
 function generateBoard() {
@@ -170,7 +178,6 @@ function generateBoard() {
       $cell.addEventListener("click", handleCellClick);
       $cell.addEventListener("auxclick", handleCellRightClick);
       $cell.addEventListener("contextmenu", (e) => e.preventDefault());
-      
 
       if (dice < VIRUS_PROBABILITY) {
         $cell.classList.add("virus");
@@ -193,10 +200,8 @@ function generateBoard() {
   }
 
   // Verificar proximidad excesiva de virus (post-generación)
-  // Nota: Iteramos para corregir aglomeraciones
   for (let y = 0; y < BOARD_SIZE; y++) {
     for (let x = 0; x < BOARD_SIZE; x++) {
-      const cellData = board[y][x];
       let proximity = countVirusNeighbors(x, y);
 
       if (proximity > VIRUS_MAX_PROXIMITY) {
@@ -253,14 +258,25 @@ function countVirusNeighbors(x, y) {
 }
 
 function handleCellClick(event) {
+  // Ignore clicks if game ended
+  if (!gameStarted || gameWin) return;
+
   const cellData = board[event.target.dataset.y][event.target.dataset.x];
-  if (cellData.element.classList.contains("flagged") && !cellData.isVirus) {
+  if (cellData.element.classList.contains
+    // You must unflag first to reveal a flagged non-virus cell
+    ("flagged") && !cellData.isVirus) {
+
     firewallCount++;
     cellData.element.classList.remove("flagged");
+    cellData.isFlagged = false;
     revealCell(cellData);
     $("#firewall-count").textContent = firewallCount;
+    checkWin();
     return;
   }
+
+  if (cellData.isFlagged) return; // Protect flagged cells from accidental clicks 
+
   if (cellData.isVirus) {
     gameOver();
     return;
@@ -272,87 +288,73 @@ function handleCellClick(event) {
 
 function handleCellRightClick(event) {
   event.preventDefault();
+  if (!gameStarted || gameWin) return;
+
   playSound(clickSound);
   if (event.target.classList.contains("revealed")) {
     return;
   }
   const cellData = board[event.target.dataset.y][event.target.dataset.x];
-  if (firewallCount === 0 && !cellData.isFlagged) {
-    return;
-  }
-  cellData.isFlagged = !cellData.isFlagged;
-  cellData.element.classList.toggle("flagged");
-  cellData.element.innerHTML = cellData.isFlagged ? "⛨" : "";
 
-  if (cellData.element.classList.contains("virus") && cellData.isFlagged) {
-    virusCount--;
+  // Toggle Flag
+  if (!cellData.isFlagged) {
+    if (firewallCount === 0) return; // Cannot flag if no flags left
+    cellData.isFlagged = true;
+    cellData.element.classList.add("flagged");
+    cellData.element.innerHTML = "⛨";
     firewallCount--;
-    $("#firewall-count").textContent = firewallCount;
-    console.log(`virusCount: ${virusCount}`);
-    return;
-  }
-  if (cellData.element.classList.contains("virus") && !cellData.isFlagged) {
-    virusCount++;
+  } else {
+    cellData.isFlagged = false;
+    cellData.element.classList.remove("flagged");
+    cellData.element.innerHTML = "";
     firewallCount++;
-    console.log(`virusCount: ${virusCount}`);
-    $("#firewall-count").textContent = firewallCount;
-    return;
   }
-  if (cellData.element.classList.contains("flagged") && cellData.isFlagged) {
-    firewallCount--;
-    $("#firewall-count").textContent = firewallCount;
-    return;
-  }
-  firewallCount++;
+
   $("#firewall-count").textContent = firewallCount;
+
   checkWin();
 }
 
 function revealCell(cellData) {
-  if (
-    cellData.element.classList.contains("flagged") &&
-    cellData.element.classList.contains("non-virus")
-  ) {
-    cellData.element.classList.remove("revealed");
+  if (cellData.isRevealed || cellData.isFlagged) return;
+
+  cellData.element.classList.add("revealed");
+  cellData.isRevealed = true;
+
+  if (cellData.isVirus) {
+    cellData.element.innerHTML = "✹";
     return;
   }
 
-  cellData.element.classList.add("revealed");
-
   if (cellData.proximity === 0) {
-    cellData.isRevealed = true;
     cellData.element.innerHTML = "";
     const neighbors = getNeighbors(cellData.x, cellData.y);
     for (const neighbor of neighbors) {
-      if (!neighbor.isRevealed && !neighbor.isVirus) {
-        neighbor.isRevealed = true;
+      if (!neighbor.isRevealed) {
         revealCell(neighbor);
       }
     }
-    return;
+  } else {
+    cellData.element.innerHTML = cellData.proximity;
   }
-  if (cellData.isVirus) {
-    cellData.element.innerHTML = "✹";
-    cellData.isRevealed = true;
-    return;
-  }
-
-  cellData.element.innerHTML = cellData.proximity;
-  cellData.isRevealed = true;
 }
 
 function checkWin() {
-  $gameGrid.querySelectorAll(".cell").forEach((cell) => {
-    const cellData = board[cell.dataset.y][cell.dataset.x];
-
-    if (!cellData.isRevealed) {
-      return;
+  // Win Condition: All non-virus cells are revealed.
+  let allSafeCellsRevealed = true;
+  for (let y = 0; y < BOARD_SIZE; y++) {
+    for (let x = 0; x < BOARD_SIZE; x++) {
+      const cell = board[y][x];
+      if (!cell.isVirus && !cell.isRevealed) {
+        allSafeCellsRevealed = false;
+        break;
+      }
     }
-  });
+    if (!allSafeCellsRevealed) break;
+  }
 
-  if (virusCount === 0) {
+  if (allSafeCellsRevealed) {
     endGame();
-    return;
   }
 }
 
@@ -360,34 +362,27 @@ function gameOver() {
   playSound(gameOverSound);
   $gameGrid.querySelectorAll(".cell").forEach((cell) => {
     const cellData = board[cell.dataset.y][cell.dataset.x];
-    console.log(cellData.isVirus, cellData.isFlagged);
-
-    if (!cellData.isRevealed && !cellData.isFlagged) {
-      revealCell(cellData);
+    if (cellData.isVirus && !cellData.isFlagged) {
+      cellData.element.classList.add("revealed");
+      cellData.element.innerHTML = "✹";
     }
   });
 
-  clearInterval(timer);
+  if (timer) clearInterval(timer);
 
   $gameScreen.style.opacity = ".36";
-
-  gameStarted = false;
+  gameStarted = false; // Stop interactions
   $gameOverScreen.style.display = "flex";
+  // Wait for Enter key (handled in initEvents)
 }
 
 function endGame() {
   playSound(winSound);
-  $gameGrid.querySelectorAll(".cell").forEach((cell) => {
-    const cellData = board[cell.dataset.y][cell.dataset.x];
+  gameWin = true; // Set win state
 
-    if (!cellData.isRevealed) {
-      revealCell(cellData);
-    }
-  });
-
-  clearInterval(timer);
+  // Reveal all viruses
+  if (timer) clearInterval(timer);
   $winTime.textContent = time;
-  $gameScreen.style.opacity = ".45";
-  gameStarted = false;
+  $gameScreen.style.opacity = ".36";
   $gameWinScreen.style.display = "flex";
 }
