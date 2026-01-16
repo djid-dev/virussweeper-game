@@ -2,7 +2,7 @@
 
 **Virus Sweeper** is a retro-cyberpunk styled puzzle game inspired by the classic **Minesweeper**. Your mission is to hunt down malicious viruses hidden in your system's memory grid without triggering them.
 
-![Virus Sweeper Screenshot](./images/virus-sweeper-preview.png)
+![Virus Sweeper Screenshot](https://raw.githubusercontent.com/djid-dev/virussweeper-game/refs/heads/main/images/virussweeper.png)
 
 ## 🕹️ How to Play
 
