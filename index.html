@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VirusFinder</title>
+    <link rel="icon" type="image/x-icon" href="icon.ico">
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="styles/animations.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main class=" crt ">
+      
+        <section class="initial-screen">
+        <h1 class="title neon-cyan">Virusweeper Game</h1>
+        <h2 class="sub-title neon-white">Hunt down viruses and protect your system!</h2>
+        <span id="start-label">
+          <span id="start-text" class="neon-orange">Press enter to start:</span>
+          <span id="cursor" class="neon-orange"></span>
+        </span>
+      </section>
+
+      <section class="game-over-screen">
+        <h1 class="title neon-red">Game Over</h1>
+        <h2 class="sub-title neon-white">Your system has been compromised!</h2>
+        <span id="start-label">
+          <span id="start-text" class="neon-orange"
+            >Press enter to restart:</span>
+          <span id="cursor" class="neon-orange"></span>
+        </span>
+      </section>
+
+      <section class="game-difficulty-screen">
+        <h1 class="title difficulty-title neon-white">Choose <span class="rainbow-retro">Difficulty</span></h1>
+         <span id="difficulty-label" class="neon-orange sub-title difficulty-sub-title"
+            >Use the cursor to select the difficulty:</span>
+        </span>
+        <div class="selectors">
+            <h2 id="easy" class="title neon-green selector">Easy</h2>
+            <h2 id="normal" class="title neon-orange selector">Normal</h2>
+            <h2 id="hard" class="title neon-red selector">Hard</h2>
+        </div>
+      </section>
+
+      <section class="game-win-screen">
+        <h1 class="title neon-green">Game Win</h1>
+        <h2 class="sub-title">Your system has been <span class="rainbow-retro">protected</span>!</h2>
+        <h2 class="sub-title">It took you: <span id="win-time">0</span> seconds</h2>
+        <span id="start-label">
+          <span id="start-text" class="neon-orange"
+            >Press enter to restart:</span>
+          <span id="cursor" class="neon-orange"></span>
+        </span>
+      </section>
+
+      <section class="game-screen">
+        <div class="game-info">
+          <h2 class="neon-white">
+            Remaining Firewalls: <span id="firewall-count">0</span>
+          </h2>
+          <h2 class="neon-white">Time: <span id="time">0</span></h2>
+        </div>
+        <ul class="grid"></ul>
+      </section>
+      
+    </main>
+  </body>
+  <script type="module" src="script.js"></script>
+  <!-- Made with <3 by Orlando J. Jorge -->
+</html>
