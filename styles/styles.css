@@ -89,6 +89,7 @@ main {
   align-items: center;
   min-width: 100vw;
   min-height: 100vh;
+  padding: 2rem;
 }
 
 /* Initial screen styles */
@@ -98,7 +99,6 @@ main {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
 }
 
 .title {
@@ -343,7 +343,7 @@ input {
 .crt {
   min-width: 100vw;
   min-height: 100vh;
-  position: sticky;
+  position: fixed;
 
   &::before {
     content: " ";
@@ -370,6 +370,28 @@ input {
     background-size: 100% 6px, 8px 100%;
     pointer-events: none;
   }
-}
 
+ 
+}
+ /* Footer styles */
+  #footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    min-width: 100vw;
+    bottom: 5%;
+    margin: 0;
+    padding: 0;
+    font-size: 1.4rem; 
+    a {
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease-in-out;
+    }
+
+    a:hover {
+      color: transparent;
+    }
+  }
 
